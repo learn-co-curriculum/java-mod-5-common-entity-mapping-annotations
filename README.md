@@ -147,7 +147,7 @@ public enum StudentGroup {
 
 The project structure should look like this:
 
-![project structure](https://curriculum-content.s3.amazonaws.com/6036/jpa-common-entity/studentgroup_enum.png)
+![project structure](https://curriculum-content.s3.amazonaws.com/6036/java-mod-5-jpa/studentgroup_enum.png)
 
 
 Now we have to add a property on our `Student` model to record the group,
@@ -279,28 +279,7 @@ Hibernate:
         (?, ?, ?, ?)
 ```
 
-If we then run `JpaReadStudent.main`, Hibernate includes the new columns in the query:
-
-```text
-Hibernate: 
-    select
-        student0_.id as id1_0_0_,
-        student0_.dob as dob2_0_0_,
-        student0_.name as name3_0_0_,
-        student0_.studentGroup as studentg4_0_0_ 
-    from
-        STUDENT_DATA student0_ 
-    where
-        student0_.id=?
-```
-
-The correct property values are printed by the `toString()` method call:
-
-```text
-Student{id=1, name='Jack', dob=2000-01-01, studentGroup=ROSE}
-```
-
-However, query the table in **pgAdmin**.  The
+Query the table in **pgAdmin**.  The
 student group value is stored as an integer where the value corresponds to the order of the
 enum, i.e., “ROSE” will be saved as `1` since it’s the second value in the
 `StudentGroup` enum (0-based indexing):
@@ -390,7 +369,7 @@ automatically. It’s added to the field along with the `@Id` annotation.
 @Table(name = "STUDENT_DATA")
 public class Student {
     @Id
-    @Generated
+    @GeneratedValue
     private int id;
 
     private String name;
@@ -407,7 +386,7 @@ public class Student {
 
 Update `JpaCreateStudent.main` to remove the call to `setId`, since the database will
 automatically generate the id value.  We will also create 2 additional students.  Give them different
-values for name, dob, and student group.  Make sure the entity manager persists both students:
+values for name, dob, and student group.  Make sure the entity manager persists all 3 students:
 
 ```java
 package org.example;
@@ -465,6 +444,7 @@ public class JpaCreateStudent {
         transaction.begin();
         entityManager.persist(student1);
         entityManager.persist(student2);
+        entityManager.persist(student3);
         transaction.commit();
 
         //close entity manager and factory
@@ -472,7 +452,6 @@ public class JpaCreateStudent {
         entityManagerFactory.close();
     }
 }
-
 ```
 
 Querying the table should show the new rows with the id automatically generated
@@ -484,7 +463,7 @@ in increasing order:
 
 The project structure should look like this:
 
-![project structure](https://curriculum-content.s3.amazonaws.com/6036/jpa-common-entity/project_structure.png)
+![project structure](https://curriculum-content.s3.amazonaws.com/6036/java-mod-5-jpa/project_structure.png)
 
 The `Student` class:
 
@@ -497,9 +476,8 @@ import java.util.Date;
 @Entity
 @Table(name = "STUDENT_DATA")
 public class Student {
-
-    @GeneratedValue
     @Id
+    @GeneratedValue
     private int id;
 
     private String name;
@@ -624,37 +602,10 @@ public class JpaCreateStudent {
         transaction.begin();
         entityManager.persist(student1);
         entityManager.persist(student2);
+        entityManager.persist(student3);
         transaction.commit();
 
         //close entity manager and factory
-        entityManager.close();
-        entityManagerFactory.close();
-    }
-}
-
-```
-
-The `JpaReadStudent` class:
-
-```java
-package org.example;
-
-import org.example.model.Student;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-
-public class JpaReadStudent {
-    public static void main(String[] args) {
-        // create EntityManager
-        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("example");
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
-
-        // get student data using primary key id=1
-        Student student1 = entityManager.find(Student.class, 1);
-        System.out.println(student1);
-
-        // close entity manager and factory
         entityManager.close();
         entityManagerFactory.close();
     }
@@ -722,7 +673,6 @@ The  `pom.xml` file:
 
 </project>
 ```
-
 
 
 ## Conclusion
