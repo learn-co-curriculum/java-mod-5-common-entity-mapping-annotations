@@ -103,10 +103,11 @@ because relying on the defaults may not provide the desired functionality.
 ### Dates
 
 Let's add a `dob` (Date of Birth) property to
-our `Student` class. The `@Temporal` annotation is used to define how the
-information will be stored in the database. We are using the `Date` class here
-to demonstrate the `@Temporal` annotation. For production apps, you would use
-the `LocalDate` class instead of the `Date` class.
+our `Student` class. 
+
+The `@Temporal` annotation is used to define how the
+information will be stored in the database. The `Date` class is used
+to demonstrate the `@Temporal` annotation.
 
 ```java
 import javax.persistence.*;
@@ -126,6 +127,36 @@ public class Student {
     // getters and setters
 }
 ```
+
+
+However, for production apps, we would use
+the `LocalDate` class instead of the `Date` class.
+
+Declare the new instance variable `dob` using the `LocalDate` class,
+as shown below. Do not use the `@Temporal` annotation since
+that is only used with `java.util.Date` and `java.util.Calendar`.
+
+```java
+package org.example.model;
+
+import javax.persistence.*;
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "STUDENT_DATA")
+public class Student {
+    @Id
+    @GeneratedValue
+    private int id;
+
+    private String name;
+    
+    private LocalDate dob;
+```
+
+There are various ways to create an instance of `LocalDate`,
+including calling the static `LocalDate.of` method.
+For example, `dob = LocalDate.of(2000,1,1)`.
 
 ### Enums
 
@@ -157,62 +188,62 @@ and update the getters, setters, and toString:
 package org.example.model;
 
 import javax.persistence.*;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "STUDENT_DATA")
 public class Student {
-  @Id
-  private int id;
+    @Id
+    @GeneratedValue
+    private int id;
 
-  private String name;
+    private String name;
+    
+    private LocalDate dob;
+    
+    private StudentGroup studentGroup;
 
-  @Temporal(TemporalType.DATE)
-  private Date dob;
+    public int getId() {
+        return id;
+    }
 
-  private StudentGroup studentGroup;
+    public void setId(int id) {
+        this.id = id;
+    }
 
-  public int getId() {
-    return id;
-  }
+    public String getName() {
+        return name;
+    }
 
-  public void setId(int id) {
-    this.id = id;
-  }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-  public String getName() {
-    return name;
-  }
+    public LocalDate getDob() {
+        return dob;
+    }
 
-  public void setName(String name) {
-    this.name = name;
-  }
+    public void setDob(LocalDate dob) {
+        this.dob = dob;
+    }
 
-  public Date getDob() {
-    return dob;
-  }
+    public StudentGroup getStudentGroup() {
+        return studentGroup;
+    }
 
-  public void setDob(Date dob) {
-    this.dob = dob;
-  }
+    public void setStudentGroup(StudentGroup studentGroup) {
+        this.studentGroup = studentGroup;
+    }
 
-  public StudentGroup getStudentGroup() {
-    return studentGroup;
-  }
-
-  public void setStudentGroup(StudentGroup studentGroup) {
-    this.studentGroup = studentGroup;
-  }
-
-  @Override
-  public String toString() {
-    return "Student{" +
-            "id=" + id +
-            ", name='" + name + '\'' +
-            ", dob=" + dob +
-            ", studentGroup=" + studentGroup +
-            '}';
-  }
+    @Override
+    public String toString() {
+        return "Student{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", dob=" + dob +
+                ", studentGroup=" + studentGroup +
+                '}';
+    }
 }
 ```
 
@@ -228,22 +259,16 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 
 public class JpaCreateStudent {
     public static void main(String[] args) {
         // create a new student instance
         Student student1 = new Student();
-        student1.setId(1);
         student1.setName("Jack");
-        try {
-            student1.setDob(new SimpleDateFormat("yyyy-MM-dd").parse("2000-01-01"));
-        }
-        catch (ParseException e) {}
+        student1.setDob(LocalDate.of(2000,1,1));
         student1.setStudentGroup(StudentGroup.ROSE);
-
-
+        
         // create EntityManager
         EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("example");
         EntityManager entityManager = entityManagerFactory.createEntityManager();
@@ -261,9 +286,7 @@ public class JpaCreateStudent {
         entityManagerFactory.close();
     }
 }
-
 ```
-
 
 Run `JpaCreateStudent.main` to persist the `Student` object with the
 new properties `dob` and `studentGroup` to the database.
@@ -299,9 +322,8 @@ public class Student {
     private int id;
 
     private String name;
-
-    @Temporal(TemporalType.DATE)
-    private Date dob;
+    
+    private LocalDate dob;
 
     @Enumerated(EnumType.STRING)
     private StudentGroup studentGroup;
@@ -373,14 +395,13 @@ public class Student {
     private int id;
 
     private String name;
-
-    @Temporal(TemporalType.DATE)
-    private Date dob;
+    
+    private LocalDate dob;
 
     @Enumerated(EnumType.STRING)
     private StudentGroup studentGroup;
 
-		// getters and setters
+    // getters,  setters, toString
 }
 ```
 
@@ -398,38 +419,26 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 
 public class JpaCreateStudent {
     public static void main(String[] args) {
         // create a new student instance
         Student student1 = new Student();
         student1.setName("Jack");
-        try {
-            student1.setDob(new SimpleDateFormat("yyyy-MM-dd").parse("2000-01-01"));
-        }
-        catch (ParseException e) {}
+        student1.setDob(LocalDate.of(2000,1,1));
         student1.setStudentGroup(StudentGroup.ROSE);
-
 
         // create a new student instance
         Student student2 = new Student();
         student2.setName("Lee");
-        try {
-            student2.setDob(new SimpleDateFormat("yyyy-MM-dd").parse("1999-01-01"));
-        }
-        catch (ParseException e) {}
+        student2.setDob(LocalDate.of(1999,1,1));
         student2.setStudentGroup(StudentGroup.DAISY);
-
 
         // create a new student instance
         Student student3 = new Student();
         student3.setName("Amal");
-        try {
-            student3.setDob(new SimpleDateFormat("yyyy-MM-dd").parse("1980-01-01"));
-        }
-        catch (ParseException e) {}
+        student3.setDob(LocalDate.of(1980,1,1));
         student3.setStudentGroup(StudentGroup.LOTUS);
 
 
@@ -471,7 +480,7 @@ The `Student` class:
 package org.example.model;
 
 import javax.persistence.*;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "STUDENT_DATA")
@@ -482,8 +491,7 @@ public class Student {
 
     private String name;
 
-    @Temporal(TemporalType.DATE)
-    private Date dob;
+    private LocalDate dob;
 
     @Enumerated(EnumType.STRING)
     private StudentGroup studentGroup;
@@ -504,11 +512,11 @@ public class Student {
         this.name = name;
     }
 
-    public Date getDob() {
+    public LocalDate getDob() {
         return dob;
     }
 
-    public void setDob(Date dob) {
+    public void setDob(LocalDate dob) {
         this.dob = dob;
     }
 
@@ -556,38 +564,26 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 
 public class JpaCreateStudent {
     public static void main(String[] args) {
         // create a new student instance
         Student student1 = new Student();
         student1.setName("Jack");
-        try {
-            student1.setDob(new SimpleDateFormat("yyyy-MM-dd").parse("2000-01-01"));
-        }
-        catch (ParseException e) {}
+        student1.setDob(LocalDate.of(2000,1,1));
         student1.setStudentGroup(StudentGroup.ROSE);
-
 
         // create a new student instance
         Student student2 = new Student();
         student2.setName("Lee");
-        try {
-            student2.setDob(new SimpleDateFormat("yyyy-MM-dd").parse("1999-01-01"));
-        }
-        catch (ParseException e) {}
+        student2.setDob(LocalDate.of(1999,1,1));
         student2.setStudentGroup(StudentGroup.DAISY);
-
 
         // create a new student instance
         Student student3 = new Student();
         student3.setName("Amal");
-        try {
-            student3.setDob(new SimpleDateFormat("yyyy-MM-dd").parse("1980-01-01"));
-        }
-        catch (ParseException e) {}
+        student3.setDob(LocalDate.of(1980,1,1));
         student3.setStudentGroup(StudentGroup.LOTUS);
 
 
@@ -685,4 +681,5 @@ when you are building your own projects.
 
 - [https://docs.oracle.com/javaee/7/api/javax/persistence/package-summary.html](https://docs.oracle.com/javaee/7/api/javax/persistence/package-summary.html)
   (check out the “Annotations Types Summary” section.   
-- [https://www.objectdb.com/api/java/jpa/Column](https://www.objectdb.com/api/java/jpa/Column)
+- [https://www.objectdb.com/api/java/jpa/Column](https://www.objectdb.com/api/java/jpa/Column)   
+- [https://docs.oracle.com/cd/E28389_01/apirefs.1111/e26376/javax/persistence/GeneratedValue.html](https://docs.oracle.com/cd/E28389_01/apirefs.1111/e26376/javax/persistence/GeneratedValue.html)
