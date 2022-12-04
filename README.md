@@ -22,8 +22,8 @@ matches the code at the end of the lesson.
 
 ## Column Customization
 
-A property of a class (i.e. instance variable) is automatically mapped to a table column but
-sometimes we may have to customize how the property is mapped .
+A property of a class (i.e. instance variable) is automatically mapped to a table column, but
+sometimes we may have to customize how the property is mapped.
 
 ### @Basic
 
@@ -178,8 +178,7 @@ public enum StudentGroup {
 
 The project structure should look like this:
 
-![project structure](https://curriculum-content.s3.amazonaws.com/6036/java-mod-5-jpa/studentgroup.png)
-
+![project structure student group enum](https://curriculum-content.s3.amazonaws.com/6036/java-mod-5-jpa/studentgroup_project.png)
 
 Now we have to add a property on our `Student` model to record the group,
 and update the getters, setters, and toString:
@@ -472,7 +471,7 @@ in increasing order:
 
 The project structure should look like this:
 
-![project structure](https://curriculum-content.s3.amazonaws.com/6036/java-mod-5-jpa/checkpoint_project.png)
+![project structure](https://curriculum-content.s3.amazonaws.com/6036/java-mod-5-jpa/final_structure_commonentities.png)
 
 The `Student` class:
 
