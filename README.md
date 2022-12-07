@@ -2,8 +2,10 @@
 
 ## Learning Goals
 
-- Create auto generated primary keys.
-- Use various entity mapping annotations.
+- Explore various entity mapping annotations.
+- Use `@Temporal` and `@Enumerated` for data types such as Date and Enums.
+- Use `@Transient` to avoid persisting a property.
+- Use `@GeneratedValue` to automatically generate primary key values 
 
 ## Introduction
 
@@ -20,19 +22,14 @@ matches the code at the end of the lesson.
 
 ## Column Customization
 
-The properties of a class is automatically mapped to a table column but
-sometimes we may have to customize how they are mapped to the database.
+A property of a class (i.e. instance variable) is automatically mapped to a table column, but
+sometimes we may have to customize how the property is mapped.
 
 ### @Basic
 
 The `@Basic` annotation is the default behavior for entity annotations. This
 annotation uses the property name as the column name and infers the database
 data type from the Java data type.
-
-If no value is set for an entity before persisting it to the database, it will
-take the default value of the data type in Java. For example, a student’s age
-will be set to `0` in the database if we don’t explicitly set it in our `main`
-method.
 
 ```java
 @Entity
@@ -41,14 +38,32 @@ public class Student {
     @Id
     private int id;
 
-		@Basic
+    @Basic
     private String name;
 
-		private int age;
-
-		// getters and setters
+    // getters and setters
 }
 ```
+
+Since `@Basic` is the default, we can omit it:
+
+```java
+@Entity
+@Table(name = "STUDENT_DATA")
+public class Student {
+    @Id
+    private int id;
+    
+    private String name;
+
+    // getters and setters
+}
+```
+
+If no value is set for an entity before persisting it to the database, the
+property will take the default value of the data type in Java. For example, the
+`name` property would be set to the default value of `NULL`.
+
 
 ### @Column
 
@@ -62,19 +77,18 @@ public class Student {
     @Id
     private int id;
 
-		@Column(name = "student_name")
+    @Column(name = "student_name")
     private String name;
+    
 
-		private int age;
-
-		// getters and setters
+    // getters and setters
 }
 ```
 
 We can use several values such as `name`, `length`, `unique`, `nullable` which
 can modify the column name or set database constraints. For example, the `name`
-property’s column name in the database will be set to “student_name” instead of
-“name”.
+property’s column name in the database will be set to "student_name" instead of
+the default "name".
 
 You can check out the different options and their usage
 [here](https://www.objectdb.com/api/java/jpa/Column) and
@@ -82,34 +96,67 @@ You can check out the different options and their usage
 
 ## Handling Different Data Types
 
-We might have to use non-primitive data types such as `Date`, `Enums` in our
+We might have to use non-primitive data types such as `Date` or `Enum` in our
 Java program. We have to specify how we want them to be mapped to the database
-because relying on the defaults may not be what you want.
+because relying on the defaults may not provide the desired functionality.
 
 ### Dates
 
-We will remove the `age` property and add a `dob` (Date of Birth) property to
-our `Student` class. The `@Temporal` annotation is used to define how the
-information will be stored in the database. We are using the `Date` class here
-to demonstrate the `@Temporal` annotation. For production apps, you would use
-the `LocalDate` class instead of the `Date` class.
+Let's add a `dob` (Date of Birth) property to
+our `Student` class. 
+
+The `@Temporal` annotation is used to define how the
+information will be stored in the database. The `Date` class is used
+to demonstrate the `@Temporal` annotation.
 
 ```java
+import javax.persistence.*;
+import java.util.Date;
+
+@Entity
+@Table(name = "STUDENT_DATA")
+public class Student {
+  @Id
+  private int id;
+
+  private String name;
+
+  @Temporal(TemporalType.DATE)
+  private Date dob;
+
+    // getters and setters
+}
+```
+
+
+However, for production apps, we would use
+the `LocalDate` class instead of the `Date` class.
+
+Declare the new instance variable `dob` using the `LocalDate` class,
+as shown below. Do not use the `@Temporal` annotation since
+that is only used with `java.util.Date` and `java.util.Calendar`.
+
+```java
+package org.example.model;
+
+import javax.persistence.*;
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "STUDENT_DATA")
 public class Student {
     @Id
+    @GeneratedValue
     private int id;
 
-		@Column(name = "student_name")
     private String name;
-
-		@Temporal(TemporalType.DATE)
-		private Date dob;
-
-		// getters and setters
-}
+    
+    private LocalDate dob;
 ```
+
+There are various ways to create an instance of `LocalDate`,
+including calling the static `LocalDate.of` method.
+For example, `dob = LocalDate.of(2000,1,1)`.
 
 ### Enums
 
@@ -117,72 +164,154 @@ The students often have to do group projects and are divided into three groups:
 `LOTUS`, `ROSE`, and `DAISY`. We are going to add a `StudentGroup` enum to our
 project to represent these groups.
 
-Create an `enum` package in the `org.example` package, create a `StudentGroup`
-enum, and the following to the `StudentGroup.java` file:
+Create a `StudentGroup` enum in the `model` package and the following:
 
 ```java
-package org.example.enums;
+package org.example.model;
 
 public enum StudentGroup {
-    LOTUS,
-    ROSE,
-    DAISY
+  LOTUS,
+  ROSE,
+  DAISY
 }
 ```
 
-Your directory structure should look like this:
+The project structure should look like this:
+
+![project structure student group enum](https://curriculum-content.s3.amazonaws.com/6036/java-mod-5-jpa/studentgroup_project.png)
+
+Now we have to add a property on our `Student` model to record the group,
+and update the getters, setters, and toString:
 
 ```java
-├── pom.xml
-├── src
-    ├── main
-    │   ├── java
-    │   │   └── org
-    │   │       └── example
-    │   │           ├── JpaMain.java
-    │   │           ├── enums
-    │   │           │   └── StudentGroup.java
-    │   │           └── models
-    │   │               └── Student.java
-    │   └── resources
-    │       └── META-INF
-    │           └── persistence.xml
-    └── test
-        └── java
-```
+package org.example.model;
 
-Now we have to add a property on our `Student` model to record the group:
+import javax.persistence.*;
+import java.time.LocalDate;
 
-```java
 @Entity
 @Table(name = "STUDENT_DATA")
 public class Student {
     @Id
+    @GeneratedValue
     private int id;
 
     private String name;
-
-    @Temporal(TemporalType.DATE)
-    private Date dob;
-
+    
+    private LocalDate dob;
+    
     private StudentGroup studentGroup;
 
-		// getters and setters
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public LocalDate getDob() {
+        return dob;
+    }
+
+    public void setDob(LocalDate dob) {
+        this.dob = dob;
+    }
+
+    public StudentGroup getStudentGroup() {
+        return studentGroup;
+    }
+
+    public void setStudentGroup(StudentGroup studentGroup) {
+        this.studentGroup = studentGroup;
+    }
+
+    @Override
+    public String toString() {
+        return "Student{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", dob=" + dob +
+                ", studentGroup=" + studentGroup +
+                '}';
+    }
 }
 ```
 
-If you run the `main` method in the `JpaMain` file now, it will insert the
-student group data as an integer where the value corresponds to the order of the
-enum, i.e., “LOTUS” will be saved as `0` since it’s the first value in the
-`StudentGroup` enum.
+We need to update `JpaCreate` to set the new `dob` and `studentGroup` property values:
 
-| ID  | DOB        | NAME | STUDENTGROUP |
-| --- | ---------- | ---- | ------------ |
-| 1   | 2022-06-12 | Jack | 0            |
+```java
+package org.example;
+
+import org.example.model.Student;
+import org.example.model.StudentGroup;
+
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
+import javax.persistence.Persistence;
+import java.time.LocalDate;
+
+public class JpaCreate {
+    public static void main(String[] args) {
+        // create a new student instance
+        Student student1 = new Student();
+        student1.setName("Jack");
+        student1.setDob(LocalDate.of(2000,1,1));
+        student1.setStudentGroup(StudentGroup.ROSE);
+        
+        // create EntityManager
+        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("example");
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+        // access transaction object
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        // create and use transactions
+        transaction.begin();
+        entityManager.persist(student1);
+        transaction.commit();
+
+        //close entity manager and factory
+        entityManager.close();
+        entityManagerFactory.close();
+    }
+}
+```
+
+Run `JpaCreate.main` to persist the `Student` object with the
+new properties `dob` and `studentGroup` to the database.
+The output should show the SQL generated by Hibernate:
+
+```text
+Hibernate: 
+    insert 
+    into
+        STUDENT_DATA
+        (dob, name, studentGroup, id) 
+    values
+        (?, ?, ?, ?)
+```
+
+Query the table in **pgAdmin**.  The
+student group value is stored as an integer where the value corresponds to the order of the
+enum, i.e., “ROSE” will be saved as `1` since it’s the second value in the
+`StudentGroup` enum (0-based indexing):
+
+![enum stored as integer](https://curriculum-content.s3.amazonaws.com/6036/entity-mapping-annotations/studentgroup_num.png)
 
 This is not safe since any reordering of the values in the `StudentGroup` enum
-will invalidate the database values. We can store the value of the enum instead
-using the `@Enumerated` annotation.
+will invalidate the database values. We can store the value of the enum as a string instead
+of an integer using the `@Enumerated` annotation.  Update `Student` to add the annotation
+`@Enumerated(EnumType.STRING)` to the `studentGroup` instance variable:
 
 ```java
 @Entity
@@ -192,20 +321,43 @@ public class Student {
     private int id;
 
     private String name;
+    
+    private LocalDate dob;
 
-    @Temporal(TemporalType.DATE)
-    private Date dob;
-
-		@Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     private StudentGroup studentGroup;
 
-		// getters and setters
+    // getters,  setters, toString
 }
 ```
 
-| ID  | DOB        | NAME | STUDENTGROUP |
-| --- | ---------- | ---- | ------------ |
-| 1   | 2022-06-12 | Jack | LOTUS        |
+
+Run `JpaCreate.main` to recreate the table and persist the `Student` object with the
+ `studentGroup` property stored as a string rather than integer.
+
+```text
+Hibernate: 
+    
+    create table STUDENT_DATA (
+       id int4 not null,
+        dob date,
+        name varchar(255),
+        studentGroup varchar(255),
+        primary key (id)
+    )
+
+Hibernate: 
+    insert 
+    into
+        STUDENT_DATA
+        (dob, name, studentGroup, id) 
+    values
+        (?, ?, ?, ?)
+```
+
+Query the table in **pgAdmin** to confirm the property was stored as the string:
+
+![enum stored as string](https://curriculum-content.s3.amazonaws.com/6036/entity-mapping-annotations/studentgroup_string.png)
 
 If it’s guaranteed that your enum ordering won’t change, you can keep the
 default behavior. But if you want to ensure that your database values are not
@@ -218,90 +370,116 @@ manually update all the previous data in the database.
 
 ### Transient Properties
 
-We can use the `@Transient` annotation if we don’t want a property to be used
-for database creation.
+We can use the `@Transient` annotation if we don’t want a property to be saved to the database.
+For example, if we were to add a `debugMessage` property (don't add it, this is just an example),
+the property would not be stored in the database table.
 
 ```java
-@Entity
-@Table(name = "STUDENT_DATA")
-public class Student {
-    @Id
-    private int id;
+    @Transient
+    private String debugMessage;
 
-    private String name;
-
-    @Temporal(TemporalType.DATE)
-    private Date dob;
-
-		@Enumerated(EnumType.STRING)
-    private StudentGroup studentGroup;
-
-		@Transient
-		private String debugMessage;
-
-		// getters and setters
-}
 ```
 
 ## Primary Key Generation
 
-The `@Generated` annotation makes the database generate unique IDs
-automatically. It’s added to the field that along with the `@Id` annotation.
+The `@GeneratedValue` annotation makes the database generate unique IDs
+automatically. It’s added to the field along with the `@Id` annotation.
 
 ```java
 @Entity
 @Table(name = "STUDENT_DATA")
 public class Student {
     @Id
-		@Generated
+    @GeneratedValue
     private int id;
 
     private String name;
+    
+    private LocalDate dob;
 
-    @Temporal(TemporalType.DATE)
-    private Date dob;
-
-		@Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     private StudentGroup studentGroup;
 
-		// getters and setters
+    // getters,  setters, toString
 }
 ```
 
-## Project Structure and Code Check
-
-At this point, your project structure look like this:
+Update `JpaCreate.main` to remove the call to `setId`, since the database will
+automatically generate the id value.  We will also create 2 additional students.  Give them different
+values for name, dob, and student group.  Make sure the entity manager persists all 3 students:
 
 ```java
-├── pom.xml
-├── src
-    ├── main
-    │   ├── java
-    │   │   └── org
-    │   │       └── example
-    │   │           ├── JpaMain.java
-    │   │           ├── enums
-    │   │           │   └── StudentGroup.java
-    │   │           └── models
-    │   │               └── Student.java
-    │   └── resources
-    │       └── META-INF
-    │           └── persistence.xml
-    └── test
-        └── java
+package org.example;
+
+import org.example.model.Student;
+import org.example.model.StudentGroup;
+
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
+import javax.persistence.Persistence;
+import java.time.LocalDate;
+
+public class JpaCreate {
+    public static void main(String[] args) {
+        // create a new student instance
+        Student student1 = new Student();
+        student1.setName("Jack");
+        student1.setDob(LocalDate.of(2000,1,1));
+        student1.setStudentGroup(StudentGroup.ROSE);
+
+        // create a new student instance
+        Student student2 = new Student();
+        student2.setName("Lee");
+        student2.setDob(LocalDate.of(1999,1,1));
+        student2.setStudentGroup(StudentGroup.DAISY);
+
+        // create a new student instance
+        Student student3 = new Student();
+        student3.setName("Amal");
+        student3.setDob(LocalDate.of(1980,1,1));
+        student3.setStudentGroup(StudentGroup.LOTUS);
+
+
+        // create EntityManager
+        EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("example");
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+        // access transaction object
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        // create and use transactions
+        transaction.begin();
+        entityManager.persist(student1);
+        entityManager.persist(student2);
+        entityManager.persist(student3);
+        transaction.commit();
+
+        //close entity manager and factory
+        entityManager.close();
+        entityManagerFactory.close();
+    }
+}
 ```
 
-Your code should look like this:
+Querying the table should show the new rows with the id automatically generated
+in increasing order:
+
+![generate id](https://curriculum-content.s3.amazonaws.com/6036/entity-mapping-annotations/generate_id.png)
+
+##  Final Project Structure and Code Check
+
+The project structure should look like this:
+
+![project structure](https://curriculum-content.s3.amazonaws.com/6036/java-mod-5-jpa/final_structure_commonentities.png)
+
+The `Student` class:
 
 ```java
-// Student.java
-
-package org.example.models;
-
-import org.example.enums.StudentGroup;
+package org.example.model;
 
 import javax.persistence.*;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "STUDENT_DATA")
@@ -312,8 +490,7 @@ public class Student {
 
     private String name;
 
-    @Temporal(TemporalType.DATE)
-    private Date dob;
+    private LocalDate dob;
 
     @Enumerated(EnumType.STRING)
     private StudentGroup studentGroup;
@@ -334,11 +511,11 @@ public class Student {
         this.name = name;
     }
 
-    public Date getDob() {
+    public LocalDate getDob() {
         return dob;
     }
 
-    public void setDob(Date dob) {
+    public void setDob(LocalDate dob) {
         this.dob = dob;
     }
 
@@ -349,12 +526,23 @@ public class Student {
     public void setStudentGroup(StudentGroup studentGroup) {
         this.studentGroup = studentGroup;
     }
+
+    @Override
+    public String toString() {
+        return "Student{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", dob=" + dob +
+                ", studentGroup=" + studentGroup +
+                '}';
+    }
 }
 ```
 
+The `StudentGroup` enum:
+
 ```java
-// StudentGroup.java
-package org.example.enums;
+package org.example.model;
 
 public enum StudentGroup {
     LOTUS,
@@ -363,31 +551,40 @@ public enum StudentGroup {
 }
 ```
 
+The `JpaCreate` class:
+
 ```java
-// JpaMain.java
 package org.example;
 
-import org.example.enums.StudentGroup;
-import org.example.models.Student;
+import org.example.model.Student;
+import org.example.model.StudentGroup;
 
-import javax.persistence.Persistence;
-import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
-import java.util.Date;
+import javax.persistence.Persistence;
+import java.time.LocalDate;
 
-public class JpaMain {
+public class JpaCreate {
     public static void main(String[] args) {
-        // create student instances
+        // create a new student instance
         Student student1 = new Student();
         student1.setName("Jack");
-        student1.setDob(new Date());
-        student1.setStudentGroup(StudentGroup.LOTUS);
+        student1.setDob(LocalDate.of(2000,1,1));
+        student1.setStudentGroup(StudentGroup.ROSE);
 
+        // create a new student instance
         Student student2 = new Student();
-        student2.setName("Leslie");
-        student2.setDob(new Date());
-        student2.setStudentGroup(StudentGroup.ROSE);
+        student2.setName("Lee");
+        student2.setDob(LocalDate.of(1999,1,1));
+        student2.setStudentGroup(StudentGroup.DAISY);
+
+        // create a new student instance
+        Student student3 = new Student();
+        student3.setName("Amal");
+        student3.setDob(LocalDate.of(1980,1,1));
+        student3.setStudentGroup(StudentGroup.LOTUS);
+
 
         // create EntityManager
         EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("example");
@@ -400,10 +597,78 @@ public class JpaMain {
         transaction.begin();
         entityManager.persist(student1);
         entityManager.persist(student2);
+        entityManager.persist(student3);
         transaction.commit();
+
+        //close entity manager and factory
+        entityManager.close();
+        entityManagerFactory.close();
     }
 }
 ```
+
+The `persistence.xml` file:
+
+```xml
+<persistence xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence
+                         http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
+             version="2.0" xmlns="http://java.sun.com/xml/ns/persistence">
+
+    <persistence-unit name="example" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <properties>
+            <!-- connect to database -->
+            <property name="javax.persistence.jdbc.driver" value="org.postgresql.Driver" /> <!-- DB Driver -->
+            <property name="javax.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/student_db" /> <!--DB URL-->
+            <property name="javax.persistence.jdbc.user" value="postgres" /> <!-- DB User -->
+            <property name="javax.persistence.jdbc.password" value="postgres" /> <!-- DB Password -->
+            <!-- configure behavior -->
+            <property name="hibernate.hbm2ddl.auto" value="create" /> <!-- create / create-drop / update -->
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQL94Dialect"/>
+            <property name="hibernate.show_sql" value="true" /> <!-- Show SQL in console -->
+            <property name="hibernate.format_sql" value="true" /> <!-- Show SQL formatted -->
+        </properties>
+    </persistence-unit>
+</persistence>
+```
+
+The  `pom.xml` file:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>jpa-example</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!-- Add the following dependencies for Hibernate and PostgreSQL -->
+    <dependencies>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-entitymanager</artifactId>
+            <version>5.6.8.Final</version>
+        </dependency>
+    </dependencies>
+
+</project>
+```
+
 
 ## Conclusion
 
@@ -414,5 +679,6 @@ when you are building your own projects.
 ## References
 
 - [https://docs.oracle.com/javaee/7/api/javax/persistence/package-summary.html](https://docs.oracle.com/javaee/7/api/javax/persistence/package-summary.html)
-  (check out the “Annotations Types Summary” section.
-- [https://www.objectdb.com/api/java/jpa/Column](https://www.objectdb.com/api/java/jpa/Column)
+  (check out the “Annotations Types Summary” section)       
+- [https://www.objectdb.com/api/java/jpa/Column](https://www.objectdb.com/api/java/jpa/Column)   
+- [https://docs.oracle.com/cd/E28389_01/apirefs.1111/e26376/javax/persistence/GeneratedValue.html](https://docs.oracle.com/cd/E28389_01/apirefs.1111/e26376/javax/persistence/GeneratedValue.html)
